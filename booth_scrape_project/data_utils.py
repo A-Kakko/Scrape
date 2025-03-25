@@ -3,8 +3,9 @@
 """
 import os
 import json
+from typing import Dict, List, Any, Optional, Union
 
-def save_to_json(data, filename):
+def save_to_json(data: List[Dict[str, Any]], filename: str) -> None:
     """
     データをJSONファイルに保存する
     
@@ -17,7 +18,7 @@ def save_to_json(data, filename):
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"{len(data)}件のデータを {filename} に保存しました")
 
-def load_from_json(filename):
+def load_from_json(filename: str) -> List[Dict[str, Any]]:
     """
     JSONファイルからデータを読み込む
     
@@ -33,7 +34,7 @@ def load_from_json(filename):
     except FileNotFoundError:
         return []
 
-def format_item_data(item_info):
+def format_item_data(item_info: Dict[str, Any]) -> Dict[str, Any]:
     """
     アイテム情報を整形する
     
@@ -43,17 +44,37 @@ def format_item_data(item_info):
     Returns:
         整形後のアイテム情報
     """
-    # 必要なフィールドがあるか確認
-    for field in ["title", "price", "url", "id"]:
+    # 必須フィールドの定義
+    required_fields: List[str] = ["title", "price", "url", "id"]
+    
+    # 数値型に変換すべきフィールドの定義
+    integer_fields: List[str] = ["price", "likes"]
+    
+    # 文字列型に変換すべきフィールドの定義
+    string_fields: List[str] = ["title", "author", "description", "id"]
+    
+    # 必要なフィールドがあるか確認し、なければNoneを設定
+    for field in required_fields:
         if field not in item_info:
             item_info[field] = None
     
     # 数値フィールドの型変換
-    for field in ["price", "likes"]:
+    for field in integer_fields:
         if field in item_info and item_info[field] is not None:
             try:
                 item_info[field] = int(item_info[field])
             except (ValueError, TypeError):
                 item_info[field] = None
+    
+    # 文字列フィールドの型変換
+    for field in string_fields:
+        if field in item_info and item_info[field] is not None:
+            try:
+                item_info[field] = str(item_info[field])
+            except (ValueError, TypeError):
+                item_info[field] = None
+    
+    # 一部の特殊なフィールドの処理（例：タイムスタンプなど）
+    # このセクションには必要に応じて特殊なフィールド処理を追加できます
     
     return item_info

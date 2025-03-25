@@ -3,10 +3,11 @@ BOOTHページのスキ数を取得するモジュール
 Playwrightを使用してページから動的に読み込まれる「スキ」数を取得します
 """
 import asyncio
-from playwright.async_api import async_playwright
+from typing import Optional
+from playwright.async_api import async_playwright, Page, Browser, BrowserContext, Playwright
 import re
 
-async def get_booth_likes_async(url):
+async def get_booth_likes_async(url: str) -> Optional[int]:
     """
     Playwrightを使用してBOOTHページのスキ数を非同期で取得する関数
     
@@ -17,12 +18,12 @@ async def get_booth_likes_async(url):
         int or None: スキ数、取得できない場合はNone
     """
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context(
+        browser: Browser = await p.chromium.launch(headless=True)
+        context: BrowserContext = await browser.new_context(
             viewport={"width": 1366, "height": 768},
             user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36'
         )
-        page = await context.new_page()
+        page: Page = await context.new_page()
         
         try:
             # ページの読み込み
@@ -32,7 +33,7 @@ async def get_booth_likes_async(url):
             # スキ数を含む要素を探す
             if await page.locator("#js-item-wishlist-button").count() > 0:
                 # JavaScript経由で要素内のテキストを取得
-                likes_count = await page.evaluate("""
+                likes_count: Optional[int] = await page.evaluate("""
                     () => {
                         const el = document.getElementById('js-item-wishlist-button');
                         if (!el) return null;
@@ -67,7 +68,7 @@ async def get_booth_likes_async(url):
         finally:
             await browser.close()
 
-def get_booth_likes(url):
+def get_booth_likes(url: str) -> Optional[int]:
     """
     BOOTHページのスキ数を同期的に取得する関数（非同期関数のラッパー）
     

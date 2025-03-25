@@ -4,11 +4,19 @@ BOOTHスクレイピングのエントリポイント
 import os
 import time
 import random
+from typing import Dict, List, Any
 from booth_scraper import BoothScraper
 from data_utils import save_to_json, format_item_data
 import config
 
-def main():
+#TODO:詳細文の取得の方法を変える（スキ数取得時と同じタイミングでやる必要がある？現状だとおそらく一番上のブロックの部分しか取得できない
+#TODO:実行時間がかかるのがsleep要因か環境要因か？ playwriteは時間食いそう・・・
+#TODO:タイトルを省略せずに取得したい
+#TODO:値段をお布施分を見ないようにしたい（検索結果からの取得を辞める）
+#TODO:型エラーの話をちょっと・・・
+#TODO:ErrorLensとか日本語にならないかな？
+
+def main() -> None:
     """メイン処理"""
     # 保存先ディレクトリを作成
     os.makedirs(config.OUTPUT_DIR, exist_ok=True)
@@ -17,7 +25,7 @@ def main():
     scraper = BoothScraper()
     
     # 収集データを保持するリスト
-    all_items = []
+    all_items: List[Dict[str, Any]] = []
     
     print(f"検索キーワード: {config.SEARCH_KEYWORD}")
     print(f"ページ範囲: {config.START_PAGE}〜{config.END_PAGE}")
