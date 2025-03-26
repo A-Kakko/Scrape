@@ -1,20 +1,20 @@
-"""
-BOOTHスクレイピングのエントリポイント
-"""
-import os
-import time
-import random
-from typing import Dict, List, Any
-from booth_scraper import BoothScraper
-from data_utils import save_to_json, format_item_data
-import config
-
 #TODO:詳細文の取得の方法を変える（スキ数取得時と同じタイミングでやる必要がある？現状だとおそらく一番上のブロックの部分しか取得できない
 #TODO:実行時間がかかるのがsleep要因か環境要因か？ playwriteは時間食いそう・・・
 #TODO:タイトルを省略せずに取得したい
 #TODO:値段をお布施分を見ないようにしたい（検索結果からの取得を辞める）
 #TODO:型エラーの話をちょっと・・・
 #TODO:ErrorLensとか日本語にならないかな？
+
+"""
+BOOTHスクレイピングのエントリポイント
+"""
+import os
+import time
+import random
+from typing import List, Dict, Any, Optional
+from booth_scraper import BoothScraper
+from data_utils import save_to_json, format_item_data
+import config
 
 def main() -> None:
     """メイン処理"""
@@ -32,19 +32,19 @@ def main() -> None:
     
     try:
         for page in range(config.START_PAGE, config.END_PAGE + 1):
-            # 検索ページからアイテムリンクを取得
+            # 検索ページからアイテムリンクのみを取得
             search_url = scraper.get_search_url(config.SEARCH_KEYWORD, page)
             item_links = scraper.get_item_links_from_search(search_url)
             
             print(f"ページ {page} から {len(item_links)} 件のアイテムリンクを取得しました")
             
             # 各アイテムページをスクレイピング
-            for item_info in item_links:
+            for item_link in item_links:
                 # ランダムな待機時間
                 scraper.wait_random_time()
                 
-                # アイテムページのスクレイピング
-                item_data = scraper.scrape_item_page(item_info)
+                # アイテムページのスクレイピング（全ての詳細情報を取得）
+                item_data = scraper.scrape_item_page(item_link)
                 if item_data:
                     # データを整形して追加
                     all_items.append(format_item_data(item_data))
