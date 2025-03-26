@@ -71,7 +71,10 @@ class BoothScraper:
                     # 商品IDを取得（あれば）
                     product_id = card.get("data-product-id", "")
                     
-                    print(f"アイテムリンク発見: {item_url} (ID: {product_id})")
+                    # 検索ページでのタイトルを取得（表示用のみ）
+                    display_title = title_link.text.strip() if title_link.text else "タイトルなし"
+                    
+                    print(f"アイテムリンク発見: {item_url} (ID: {product_id}, タイトル: {display_title})")
                     
                     item_links.append({
                         "url": item_url,
@@ -105,9 +108,26 @@ class BoothScraper:
             
             # タイトル取得
             title = "不明"
-            title_elem = soup.select_one("h1.item-header__title")
-            if title_elem:
-                title = title_elem.text.strip()
+            # まずはページのtitleタグから取得を試みる
+            if soup.title:
+                title_text = soup.title.text.strip()
+                # 「商品名 - 販売者名 - BOOTH」の形式から商品名を抽出
+                if " - " in title_text:
+                    # 最後の「- BOOTH」を削除
+                    if title_text.endswith(" - BOOTH"):
+                        title_text = title_text[:-9]
+                    
+                    # 最後の「- 販売者名」を削除
+                    if " - " in title_text:
+                        title_text = title_text.rsplit(" - ", 1)[0]
+                    
+                    title = title_text.strip()
+            
+            # titleタグからの取得に失敗した場合はh1要素から取得
+            if title == "不明":
+                title_elem = soup.select_one("h1.item-header__title")
+                if title_elem:
+                    title = title_elem.text.strip()
             
             # 価格取得
             price: Optional[Union[int, str]] = None
