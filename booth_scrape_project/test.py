@@ -1,7 +1,21 @@
-import ollama
+import requests
 
-response1 = ollama.generate(model='phi3', prompt='What is the capital of France? (Only capital name)')
-response2 = ollama.generate(model='phi3', prompt='And what about Germany? (Only capital name)')
+API_SERVER_URL = "http://localhost:11434/api/chat"
 
-print(response1['response'])
-print(response2['response'])
+
+def main():
+    headers = {"Content-Type": "application/json"}
+    json = {
+        "model": "deepseek-r1:14b",
+        "messages": [{
+            "role": "user",
+            "content": "Hello",
+        }]
+    }
+
+    response = requests.post(API_SERVER_URL, headers=headers, json=json)
+    response.raise_for_status()
+
+    print(response.text)
+
+main()
