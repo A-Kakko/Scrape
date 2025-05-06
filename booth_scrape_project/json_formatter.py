@@ -132,7 +132,7 @@ def build_prompt(examples, input_json):
 2. gm_required: 説明文からGM必要性（「必要」「不要」「どちらでも可」のいずれか）
 3. min_players, max_players: 最小・最大プレイ人数
 4. play_time: プレイ時間（最短と平均）を分単位で数値化
-5. title: タイトルから【】などの記号を取り除いてシンプルに
+5. title: タイトルから【】、「」、『』などの記号を取り除いてシンプルに
 
 元のデータと整形後のデータの例を示します：
 """
@@ -148,7 +148,7 @@ def build_prompt(examples, input_json):
 説明文から以下の情報を正確に抽出してください：
 - game_type: タイトルや説明文からゲームの種類を「TRPG」「マーダーミステリー」「その他」のいずれかで判定
 - gm_required: GM必要性（「必要」「不要」「どちらでも可」のいずれか）
-- min_players, max_players: 最小・最大プレイ人数
+- min_players, max_players: 最小・最大プレイ人数(GM込みで必要な最少人数、GMレス可ならその場合の人数)
 - play_time: プレイ時間を分単位で表現（最短minと平均avg）
 
 タイトルは【】などの記号を取り除き、シンプルにしてください。
