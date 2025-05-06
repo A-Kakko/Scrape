@@ -21,7 +21,7 @@ API_TYPE_OLLAMA = "ollama"
 
 # モデル設定
 DEFAULT_GEMINI_MODEL = "gemini-2.0-flash-001"
-DEFAULT_OLLAMA_MODEL = "gemma2"
+DEFAULT_OLLAMA_MODEL = "gemma3:12b"
 
 # APIクライアントの初期化
 def initialize_client(api_type):
