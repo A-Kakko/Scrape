@@ -152,75 +152,44 @@ class BoothScraper(BaseScraper):
         # 説明文取得の改善
         description = ""
         
-        # まず、item-description コンテナを探す (最も一般的)
-        item_description = soup.find("div", class_="item-description")
-        if item_description:
-            # 説明文のテキストをすべて取得（HTMLタグを除去）
-            description = item_description.get_text(separator='\n', strip=True)
+        # 1. まず短い説明文を取得（メイン説明文）
+        short_desc_elem = soup.select_one(".js-market-item-detail-description .description") or \
+                        soup.select_one(".js-market-item-detail-description .autolink")
+        if short_desc_elem:
+            description += short_desc_elem.text.strip() + "\n\n"
         
-        # 取得できなかった場合、クラス名に基づく候補を試す
-        if not description:
-            description_candidates = [
-                soup.find("div", class_="description"),
-                soup.find("div", class_="with-indent"),
-                soup.find("div", class_="detail-description"),
-                soup.find("div", id="description"),
-                soup.find("div", class_="booth-description"),
-                soup.find("div", class_="item-body"),
-                soup.find("section", class_="item-description-container"),
-                soup.find("div", attrs={"itemprop": "description"}),
-            ]
-            
-            for candidate in description_candidates:
-                if candidate and candidate.get_text(strip=True):
-                    description = candidate.get_text(separator='\n', strip=True)
-                    break
+        # 2. 詳細説明文を取得（セクション構造）
+        detailed_sections = soup.select("section.shop__text")
+        if detailed_sections:
+            for section in detailed_sections:
+                # セクションの見出し取得
+                heading = section.select_one("h2")
+                if heading:
+                    description += f"**{heading.text.strip()}**\n"
+                
+                # セクションの本文取得
+                content = section.select_one("p")
+                if content:
+                    description += f"{content.text.strip()}\n\n"
         
-        # どのセレクタでも見つからない場合、メインコンテンツから探す
+        # 3. 別の構造の説明文も探してみる（バックアップ）
         if not description:
-            # 商品詳細セクションを特定
-            main_content = soup.find("div", class_="main-content-container") or soup.find("div", class_="item-main-content")
-            if main_content:
-                # 明らかにナビゲーションやヘッダーの要素を除外
-                for nav in main_content.find_all(["nav", "header", "footer", "aside"]):
+            alt_desc_elem = soup.select_one(".item-description") or \
+                            soup.select_one(".with-indent") or \
+                            soup.select_one(".detail-description")
+            if alt_desc_elem:
+                description = alt_desc_elem.text.strip()
+        
+        # 説明文が空の場合、最終手段として商品詳細セクション全体から取得
+        if not description:
+            full_details = soup.select_one(".market-item-detail") or \
+                            soup.select_one(".item-description-container")
+            if full_details:
+                # ナビゲーションなど不要部分を除外
+                for nav in full_details.find_all(["nav", "header", "footer"]):
                     nav.decompose()
-                
-                # 価格や購入ボタンを含む要素を除外
-                for elem in main_content.find_all(class_=lambda c: c and any(x in str(c) for x in ["price", "cart", "button", "header", "purchase", "variation"])):
-                    elem.decompose()
-                
-                # 残りのコンテンツから一定の長さのテキストを持つブロックを見つける
-                content_blocks = main_content.find_all(["div", "p", "section"], class_=lambda c: c != "item-header")
-                for block in content_blocks:
-                    text = block.get_text(strip=True)
-                    if len(text) > 100:  # 一定以上の長さがあれば説明文と判断
-                        description = block.get_text(separator='\n', strip=True)
-                        break
-        
-        # それでも見つからない場合、最後の手段として大きなテキストブロックを探す
-        if not description:
-            # ページ全体から十分な長さのテキストブロックを持つ要素を見つける
-            potential_desc_blocks = []
-            for block in soup.find_all(["div", "section", "article"]):
-                # ヘッダー、フッター、ナビゲーション要素をスキップ
-                if block.find_parent(["header", "footer", "nav", "aside"]):
-                    continue
-                    
-                text = block.get_text(strip=True)
-                # 商品説明っぽい長さのテキストを持つブロックを見つける
-                if len(text) > 150 and not any(x in str(block.get('class', '')) for x in ["header", "footer", "nav", "cart"]):
-                    potential_desc_blocks.append((block, len(text)))
-            
-            # テキスト長でソートして最も長いブロックを選択
-            if potential_desc_blocks:
-                potential_desc_blocks.sort(key=lambda x: x[1], reverse=True)
-                description = potential_desc_blocks[0][0].get_text(separator='\n', strip=True)
-        
-        # 説明文の整形と改行の保持
-        if description:
-            # 余分な空白行を削除し、適切な改行を保持
-            description = re.sub(r'\n{3,}', '\n\n', description)
-            description = description.strip()
+                description = full_details.text.strip()
+
             
         # サムネイル画像URL取得
         thumbnail_url = None

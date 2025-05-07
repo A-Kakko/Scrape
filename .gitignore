@@ -1,3 +1,4 @@
+.gitignore
 /data/
 *.json
 __pycache__/
@@ -9,3 +10,4 @@ env/
 venv/
 /**/formatted_output
 */__pycache__
+booth_scrape_project/__pycache__/config.cpython-313.pyc
