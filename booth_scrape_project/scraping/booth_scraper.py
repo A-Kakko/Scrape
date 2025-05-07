@@ -4,7 +4,7 @@ BOOTHウェブサイトからデータをスクレイピングするクラス
 import urllib.parse
 from typing import List, Dict, Optional, Any, Union
 from bs4 import BeautifulSoup
-
+import re
 from scraping.base_scraper import BaseScraper
 from scraping.interaction.likes import get_booth_likes
 import config
@@ -149,12 +149,79 @@ class BoothScraper(BaseScraper):
         if author_elem:
             author = author_elem.text.strip()
         
-        # 説明文取得
+        # 説明文取得の改善
         description = ""
-        desc_elem = soup.select_one(".description") or soup.select_one(".item-description")
-        if desc_elem:
-            description = desc_elem.text.strip()
         
+        # まず、item-description コンテナを探す (最も一般的)
+        item_description = soup.find("div", class_="item-description")
+        if item_description:
+            # 説明文のテキストをすべて取得（HTMLタグを除去）
+            description = item_description.get_text(separator='\n', strip=True)
+        
+        # 取得できなかった場合、クラス名に基づく候補を試す
+        if not description:
+            description_candidates = [
+                soup.find("div", class_="description"),
+                soup.find("div", class_="with-indent"),
+                soup.find("div", class_="detail-description"),
+                soup.find("div", id="description"),
+                soup.find("div", class_="booth-description"),
+                soup.find("div", class_="item-body"),
+                soup.find("section", class_="item-description-container"),
+                soup.find("div", attrs={"itemprop": "description"}),
+            ]
+            
+            for candidate in description_candidates:
+                if candidate and candidate.get_text(strip=True):
+                    description = candidate.get_text(separator='\n', strip=True)
+                    break
+        
+        # どのセレクタでも見つからない場合、メインコンテンツから探す
+        if not description:
+            # 商品詳細セクションを特定
+            main_content = soup.find("div", class_="main-content-container") or soup.find("div", class_="item-main-content")
+            if main_content:
+                # 明らかにナビゲーションやヘッダーの要素を除外
+                for nav in main_content.find_all(["nav", "header", "footer", "aside"]):
+                    nav.decompose()
+                
+                # 価格や購入ボタンを含む要素を除外
+                for elem in main_content.find_all(class_=lambda c: c and any(x in str(c) for x in ["price", "cart", "button", "header", "purchase", "variation"])):
+                    elem.decompose()
+                
+                # 残りのコンテンツから一定の長さのテキストを持つブロックを見つける
+                content_blocks = main_content.find_all(["div", "p", "section"], class_=lambda c: c != "item-header")
+                for block in content_blocks:
+                    text = block.get_text(strip=True)
+                    if len(text) > 100:  # 一定以上の長さがあれば説明文と判断
+                        description = block.get_text(separator='\n', strip=True)
+                        break
+        
+        # それでも見つからない場合、最後の手段として大きなテキストブロックを探す
+        if not description:
+            # ページ全体から十分な長さのテキストブロックを持つ要素を見つける
+            potential_desc_blocks = []
+            for block in soup.find_all(["div", "section", "article"]):
+                # ヘッダー、フッター、ナビゲーション要素をスキップ
+                if block.find_parent(["header", "footer", "nav", "aside"]):
+                    continue
+                    
+                text = block.get_text(strip=True)
+                # 商品説明っぽい長さのテキストを持つブロックを見つける
+                if len(text) > 150 and not any(x in str(block.get('class', '')) for x in ["header", "footer", "nav", "cart"]):
+                    potential_desc_blocks.append((block, len(text)))
+            
+            # テキスト長でソートして最も長いブロックを選択
+            if potential_desc_blocks:
+                potential_desc_blocks.sort(key=lambda x: x[1], reverse=True)
+                description = potential_desc_blocks[0][0].get_text(separator='\n', strip=True)
+        
+        # 説明文の整形と改行の保持
+        if description:
+            # 余分な空白行を削除し、適切な改行を保持
+            description = re.sub(r'\n{3,}', '\n\n', description)
+            description = description.strip()
+            
         # サムネイル画像URL取得
         thumbnail_url = None
         main_image = soup.select_one(".item-view__image-link img")
