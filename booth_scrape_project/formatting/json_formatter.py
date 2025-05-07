@@ -143,6 +143,9 @@ def get_examples() -> List[Dict]:
 
 def extract_json_from_response(response_text: str) -> Optional[Dict]:
     """テキストレスポンスからJSONを抽出して解析"""
+    if response_text is None:
+        return None
+    
     json_str = response_text.strip()
 
     # コードブロック内のJSONを抽出
@@ -157,11 +160,20 @@ def extract_json_from_response(response_text: str) -> Optional[Dict]:
     except json.JSONDecodeError:
         # 余分なテキストを除去して再試行
         try:
+            clean_text = re.search(r'({[\s\S]*})',json_str)
+            if clean_text:
+                return json.loads(clean_text.group(1))
+            
+            #失敗した場合は下の正規表現を試す
             clean_text = re.sub(r'^[^{]*({.*})[^}]*$',
                                 r'\1', json_str, flags=re.DOTALL)
             return json.loads(clean_text)
         except json.JSONDecodeError:
-            print(f"Failed to parse JSON from response: {json_str}")
+            print(f"Failed to parse JSON from response. First 100 chars: {json_str[:100]}...")
+            # デバッグのためにログファイルに保存
+            with open("json_parse_error.log", "w", encoding="utf-8") as f:
+                f.write(json_str)
+            print("Response saved to json_parse_error.log for debugging")
             return None
 
 
@@ -175,9 +187,11 @@ def format_json_with_api(input_json: Dict, api_type: str, model_name: str, examp
     for attempt in range(retries):
         try:
             if api_type == API_TYPE_GEMINI:
-                return format_with_gemini(prompt, model_name)
+                response_text = format_with_gemini(prompt, model_name)
+                return extract_json_from_response(response_text)
             elif api_type == API_TYPE_OLLAMA:
-                return format_with_ollama(prompt, model_name)
+                response_text = format_with_ollama(prompt, model_name)
+                return extract_json_from_response(response_text)
             else:
                 print(f"Unsupported API type: {api_type}")
                 sys.exit(1)
