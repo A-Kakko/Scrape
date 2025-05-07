@@ -32,7 +32,7 @@ def build_prompt(examples: List[Dict], input_json: Dict) -> str:
 
 1. game_type: タイトルや説明文から「マーダーミステリー」「その他」のいずれかを判断
 2. gm_required: 説明文からGM必要性（「必要」「不要」「どちらでも可」のいずれか）
-3. min_players, max_players: 最小・最大プレイ人数
+3. min_players, max_players: 最小・最大プレイ人数（GM必須の場合はどちらもGM込の人数を、どちらでも可の場合は最小人数はGMなし、最大人数はGM込の人数にすること）
 4. play_time: プレイ時間（平均）を分単位で数値化
 5. title: タイトルから【】などの記号を取り除いてシンプルに
 6. likes:100未満なら"~100",100~500なら"100~500",500以上なら"500~"
