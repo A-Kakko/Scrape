@@ -5,7 +5,7 @@ import os
 import requests
 from typing import Dict, Optional
 
-def format_with_ollama(prompt: str, model_name: str) -> Optional[Dict]:
+def format_with_ollama(prompt: str, model_name: str) -> Optional[str]:
     """Ollama APIを使用してプロンプトを処理"""
     api_url = os.getenv("OLLAMA_API_URL", "http://localhost:11434/api")
     
@@ -25,7 +25,9 @@ def format_with_ollama(prompt: str, model_name: str) -> Optional[Dict]:
         response.raise_for_status()
         
         response_json = response.json()
+        # APIからのレスポンステキストを返す
         return response_json.get("response", "")
         
     except requests.RequestException as e:
-        raise Exception(f"Error in Ollama API call: {e}")
+        print(f"Error in Ollama API call: {e}")
+        return None
