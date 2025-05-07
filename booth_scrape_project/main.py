@@ -10,7 +10,7 @@ from scraping.booth_scraper import BoothScraper
 # 整形機能 
 from formatting.json_formatter import process_file
 # ユーティリティ
-from utils.data_utils import save_to_json, format_item_data
+from utils.data_utils import save_to_json, format_item_data, append_to_json
 # 設定
 import config
 
@@ -29,6 +29,9 @@ def scrape_booth(keyword: str, start_page: int = 1, end_page: int = 1, output_di
     """
     # 保存先ディレクトリを作成
     os.makedirs(output_dir, exist_ok=True)
+    
+    # describe output file's name
+    output_file = f"{output_dir}/booth_data_{keyword}_page_{start_page}-{end_page}.json"
     
     # スクレイパーを初期化
     scraper = BoothScraper()
@@ -56,8 +59,10 @@ def scrape_booth(keyword: str, start_page: int = 1, end_page: int = 1, output_di
                 item_data = scraper.scrape_item_page(item_link)
                 if item_data:
                     # データを整形して追加
-                    all_items.append(format_item_data(item_data))
-            
+                    formatted_item = format_item_data(item_data)
+                    all_items.append(formatted_item)
+                    append_to_json(formatted_item, output_file)
+                    
             # ページ間の待機時間
             if page < end_page:
                 scraper.wait_random_time(
@@ -65,17 +70,6 @@ def scrape_booth(keyword: str, start_page: int = 1, end_page: int = 1, output_di
                     config.WAIT_TIME_MAX + 3
                 )
             
-            # 途中経過を保存
-            save_to_json(
-                all_items, 
-                f"{output_dir}/booth_data_page_{start_page}-{page}.json"
-            )
-        
-        # 最終データを保存
-        save_to_json(
-            all_items, 
-            f"{output_dir}/booth_data_{keyword}.json"
-        )
         
         return all_items
         
@@ -88,6 +82,8 @@ def scrape_booth(keyword: str, start_page: int = 1, end_page: int = 1, output_di
         print(f"\n予期せぬエラーが発生しました: {str(e)}")
         if all_items:
             save_to_json(all_items, f"{output_dir}/booth_data_error.json")
+        else:
+            print("NO,Item. So dont save.")
         return all_items
 
 def format_booth_data(input_file: str, output_dir: str = "formatted", api_type: str = "gemini") -> None:
