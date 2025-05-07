@@ -187,6 +187,8 @@ def process_file(file_path: str, output_dir: str, api_type: str, model_name: str
             for item in tqdm(input_data, desc=f"Processing {file_path}", unit="item"):
                 formatted_item = format_json_with_api(item, api_type, model_name, examples)
                 if formatted_item:
+                    title = formatted_item.get("title","タイトルなし")
+                    print(f"成功： \"{title}\"の整形が完了")
                     results.append(formatted_item)
                     append_to_json(formatted_item, output_file)
                     print(f"アイテム処理完了： {formatted_item.get('title','不明なタイトル')}")
@@ -199,6 +201,8 @@ def process_file(file_path: str, output_dir: str, api_type: str, model_name: str
             formatted_data = format_json_with_api(input_data, api_type, model_name, examples)
             if formatted_data:
                 # 結果を保存
+                title = formatted_data.get("title","タイトルなし")
+                print(f"成功： \"{title}\"の整形が完了")
                 with open(output_file, 'w', encoding='utf-8') as f:
                     json.dump(formatted_data, f, ensure_ascii=False, indent=2)
                 return 1
@@ -253,7 +257,7 @@ def process_directory(input_dir: str, output_dir: str, api_type: str, model_name
                 try:
                     result_count = future.result()
                     processed_count += result_count
-                    print(f"Processed {file}: {result_count} items")
+                    print(f"完了：{file}から{result_count}件の処理が終了しました。")
                 except Exception as e:
                     print(f"Error processing {file}: {e}")
         
