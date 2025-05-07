@@ -10,7 +10,7 @@ import sys
 from typing import Dict, List, Any, Optional
 from tqdm import tqdm
 from pathlib import Path
-
+from utils.data_utils import append_to_json
 # APIクライアントインポート
 from formatting.api.gemini import format_with_gemini
 from formatting.api.ollama import format_with_ollama
@@ -181,18 +181,18 @@ def process_file(file_path: str, output_dir: str, api_type: str, model_name: str
         
         # データタイプに基づいて処理
         if isinstance(input_data, list):
-            # 配列の場合は各アイテムを処理
+            # 配列の場合は各アイテムを処理し、すぐ保存する
+            os.makedirs(output_dir, exist_ok=True)
             results = []
             for item in tqdm(input_data, desc=f"Processing {file_path}", unit="item"):
                 formatted_item = format_json_with_api(item, api_type, model_name, examples)
                 if formatted_item:
                     results.append(formatted_item)
+                    append_to_json(formatted_item, output_file)
+                    print(f"アイテム処理完了： {formatted_item.get('title','不明なタイトル')}")
                 time.sleep(delay)  # APIリクエスト間の遅延
             
-            # 結果を保存
-            with open(output_file, 'w', encoding='utf-8') as f:
-                json.dump(results, f, ensure_ascii=False, indent=2)
-            
+
             return len(results)
         else:
             # 単一オブジェクトの場合
@@ -205,7 +205,7 @@ def process_file(file_path: str, output_dir: str, api_type: str, model_name: str
             return 0
             
     except Exception as e:
-        print(f"Error processing file {file_path}: {e}")
+        print(f"ファイル処理エラー{file_path}: {e}")
         return 0
 
 def process_directory(input_dir: str, output_dir: str, api_type: str, model_name: str, examples: Optional[List[Dict]] = None, max_workers: int = 1, delay: float = 4) -> int:
