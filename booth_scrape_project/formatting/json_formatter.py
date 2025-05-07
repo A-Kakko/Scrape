@@ -29,10 +29,10 @@ def build_prompt(examples: List[Dict], input_json: Dict) -> str:
 以下はゲームシナリオや関連コンテンツのJSONデータを特定の形式に整形する例です。
 以下の情報を抽出・整形してください：
 
-1. game_type: タイトルや説明文から「TRPG」「マーダーミステリー」「その他」のいずれかを判断
+1. game_type: タイトルや説明文から「マーダーミステリー」「その他」のいずれかを判断
 2. gm_required: 説明文からGM必要性（「必要」「不要」「どちらでも可」のいずれか）
 3. min_players, max_players: 最小・最大プレイ人数
-4. play_time: プレイ時間（最短と平均）を分単位で数値化
+4. play_time: プレイ時間（平均）を分単位で数値化
 5. title: タイトルから【】などの記号を取り除いてシンプルに
 
 元のデータと整形後のデータの例を示します：
@@ -71,10 +71,9 @@ def get_examples() -> List[Dict]:
                 "author": "らしょちゃんshop",
                 "game_type": "マーダーミステリー",
                 "gm_required": "必要",
-                "min_players": 2,
+                "min_players": 3,
                 "max_players": 3,
                 "play_time": {
-                    "min": 75,
                     "avg": 120
                 },
                 "thumbnail_url": "https://example.com/thumbnail1.jpg"
@@ -103,7 +102,6 @@ def get_examples() -> List[Dict]:
                 "min_players": 0,
                 "max_players": 0,
                 "play_time": {
-                    "min": 0,
                     "avg": 0
                 },
                 "thumbnail_url": "https://example.com/thumbnail2.jpg"
