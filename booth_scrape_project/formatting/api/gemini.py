@@ -2,6 +2,7 @@
 Google Gemini APIを利用したフォーマット機能
 """
 import os
+import sys
 from typing import Dict, Optional
 from pathlib import Path
 from dotenv import load_dotenv
@@ -32,12 +33,14 @@ def format_with_gemini(prompt: str, model_name: str) -> Optional[Dict]:
 
         if not env_loaded:
             print("警告: .envファイルが見つかりませんでした")
+            
 
         # 環境変数を取得
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
-            raise ValueError(
+            print(
                 "GEMINI_API_KEY が環境変数に設定されていません。.envファイルを確認してください。")
+            sys.exit(1)
 
         client = genai.Client(api_key=api_key)
 
@@ -54,7 +57,8 @@ def format_with_gemini(prompt: str, model_name: str) -> Optional[Dict]:
         return response.text
 
     except ImportError:
-        raise ImportError(
-            "google-generativeai package is not installed. Run: pip install google-generativeai")
+        print("google-generativeai package is not installed. Run: pip install google-generativeai")
+        sys.exit(1)
     except Exception as e:
-        raise Exception(f"Error in Gemini API call: {e}")
+        print(f"Error in Gemini API call: {e}")
+        sys.exit(1)

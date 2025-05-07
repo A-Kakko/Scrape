@@ -6,6 +6,7 @@ import json
 import re
 import time
 import requests
+import sys
 from typing import Dict, List, Any, Optional
 from tqdm import tqdm
 from pathlib import Path
@@ -146,7 +147,8 @@ def format_json_with_api(input_json: Dict, api_type: str, model_name: str, examp
             elif api_type == API_TYPE_OLLAMA:
                 return format_with_ollama(prompt, model_name)
             else:
-                raise ValueError(f"Unsupported API type: {api_type}")
+                print(f"Unsupported API type: {api_type}")
+                sys.exit(1)
                 
         except Exception as e:
             error_str = str(e)
